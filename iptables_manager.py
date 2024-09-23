@@ -46,7 +46,7 @@ class IPTablesManager:
                 match.dport = str(port)
 
             if ip:
-                ipaddress.ip_network(ip)  # Validate IP
+                ipaddress.ip_network(ip)  
                 if chain == "INPUT":
                     rule.src = ip
                 elif chain == "OUTPUT":
