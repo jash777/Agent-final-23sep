@@ -7,14 +7,10 @@ from dotenv import load_dotenv
 from typing import Dict, Any, List
 from iptables_manager import IPTablesManager
 from system_manager import SystemManager
-from application_manager import ApplicationManager
+# from application_manager import ApplicationManager
 from network_manager import NetworkManager
-from system_monitor import SystemMonitor
-from log_manager import LogManager
-from backup_manager import BackupManager
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from werkzeug.middleware.proxy_fix import ProxyFix
+from ubuntu_service_manager import UbuntuServiceManager
 
 
 load_dotenv()
@@ -24,11 +20,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 socketio = SocketIO(app, cors_allowed_origins=os.getenv('CORS_ORIGINS', '*').split(','))
 
 # Setup rate limiting
-limiter = Limiter(
-    app,
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
-)
 
 # Configure logging
 logging.basicConfig(
@@ -40,11 +31,8 @@ logger = logging.getLogger(__name__)
 
 iptables_manager = IPTablesManager()
 system_manager = SystemManager()
-app_manager = ApplicationManager()
+# app_manager = ApplicationManager()
 network_manager = NetworkManager()
-system_monitor = SystemMonitor()
-log_manager = LogManager()
-backup_manager = BackupManager()
 
 def require_api_key(f):
     @wraps(f)
@@ -58,7 +46,6 @@ def require_api_key(f):
 
 
 @app.route('/')
-@limiter.exempt
 def agent_status():
     return "<h1>Agent is running</h1>"
 
@@ -194,21 +181,39 @@ def remove_user_route():
 def get_users_route():
     return jsonify({'users': system_manager.get_non_default_users()})
 
-@app.route('/applications')
+# @app.route('/applications')
+# @require_api_key
+# def get_applications():
+#     try:
+#         applications = app_manager.get_installed_applications()
+#         return jsonify({
+#             'status': 'success',
+#             'count': len(applications),
+#             'applications': applications
+#         })
+#     except Exception as e:
+#         logger.error(f"Error in get_applications route: {e}")
+#         return jsonify({
+#             'status': 'error',
+#             'message': 'An error occurred while retrieving installed applications',
+#             'error': str(e)
+#         }), 500
+
+@app.route('/services')
 @require_api_key
-def get_applications():
+def get_services():
     try:
-        applications = app_manager.get_installed_applications()
+        services = service_manager.get_services()
         return jsonify({
             'status': 'success',
-            'count': len(applications),
-            'applications': applications
+            'count': len(services),
+            'services': services
         })
     except Exception as e:
-        logger.error(f"Error in get_applications route: {e}")
+        logger.error(f"Error in get_services route: {e}")
         return jsonify({
             'status': 'error',
-            'message': 'An error occurred while retrieving installed applications',
+            'message': 'An error occurred while retrieving services',
             'error': str(e)
         }), 500
 
